@@ -2,11 +2,8 @@
 $username=API_USER;
 $password=API_PASS;
 $data="username=$username&password=$password";
-$valadez_api='https://cs4743.professorvaladez.com/api/';
 
 $ch=curl_init($valadez_api.'create_session');
-
-// REMEMBER: this is a template. Look at this code, and know good and bad programming practices...
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); //expecting data back. write exceptions for null data

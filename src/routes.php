@@ -1,6 +1,7 @@
 <?php
+$valadez_api='https://cs4743.professorvaladez.com/api/';
 
-function create_session() {
+function create_session($data) {
     $ch=curl_init($valadez_api.'create_session');
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -20,7 +21,7 @@ function request_file($data) {
         'content-length: '.strlen($data)));
 }
 
-function close_session() {
+function close_session($data) {
     $ch=curl_init($valadez_api.'close_session');
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, data);
@@ -30,7 +31,7 @@ function close_session() {
         'content-length: '.strlen($data)));
 }
 
-function query_files() {
+function query_files($data) {
     $ch=curl_init($valadez_api.'query_files');
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, data);
