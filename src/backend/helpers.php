@@ -1,5 +1,5 @@
 <?php
-$valadez_api='https://cs4743.professorvaladez.com/api/';
+$valadez_api = 'https://cs4743.professorvaladez.com/api/';
 
 function api_call($endpoint, $data) {
     global $valadez_api;

@@ -1,8 +1,8 @@
 <?php
 require 'routes.php';
 
-$username = API_USER;
-$password = API_PASS;
+$username = getenv('API_USER');
+$password = getenv('API_PASS');
 $data = "username=$username&password=$password";
 
 // Create Session Endpoint
