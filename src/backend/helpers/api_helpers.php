@@ -17,17 +17,19 @@ function api_call($endpoint, $data) {
 
     $response = curl_exec($ch);
     if ($response === false) {
-        log_message("CURL ERROR: " . curl_error($ch));
+        echo "CURL ERROR: " . curl_error($ch));
     }
     curl_close($ch);
+
+    echo "API CALL SUCCESSFUL: " . var_dump($response);
 
     return json_decode($response, true);
 }
 
-function save_session($sid, $username) {
-    global $mysqli;
-    $stmt = $mysqli->prepare("INSERT INTO api_sessions (sid, username) VALUES (?, ?)");
-    $stmt->bind_param("ss", $sid, $username);
+function save_session($sid) {
+    global $dblink;
+    $stmt = $dblink->prepare("INSERT INTO api_sessions (sid) VALUES (?)");
+    $stmt->bind_param("s", $sid);
     if (!$stmt->execute()) {
         log_message("DB ERROR: Failed to save session $sid");
     } else {
@@ -36,8 +38,8 @@ function save_session($sid, $username) {
 }
 
 function get_latest_session_id() {
-    global $mysqli;
-    $result = $mysqli->query("SELECT sid FROM api_sessions ORDER BY created_at DESC LIMIT 1");
+    global $dblink;
+    $result = $dblink->query("SELECT sid FROM api_sessions ORDER BY created_at DESC LIMIT 1");
     $row = $result->fetch_assoc();
     return $row['sid'] ?? null;
 }

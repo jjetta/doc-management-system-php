@@ -8,10 +8,9 @@ $db   = getenv('DB_NAME') ?: 'document_management';
 $dblink = new mysqli($host, $user, $pass, $db);
 
 // Check connection
-if ($mysqli->connect_errno) {
-    die("Failed to connect to MySQL: " . $mysqli->connect_error);
+if ($dblink->connect_errno) {
+    echo "Failed to connect to MySQL: " . $dblink->connect_error;
+    throw new RuntimeException("Database connection error. Check logs for details.");
 }
 
-// Optional: set charset
-$mysqli->set_charset("utf8mb4");
 
