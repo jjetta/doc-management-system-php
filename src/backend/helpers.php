@@ -49,4 +49,10 @@ function generate_files($info) {
 
     return $files;
 }
+
+function log_message($message, $level = "INFO") {
+    $log_file = __DIR__ . '/logs/app.log';
+    $date = date('Y-m-d H:i:s');
+    file_put_contents($log_file, "[$date] [$level] $message\n", FILE_APPEND);
+}
 ?>
