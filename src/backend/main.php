@@ -9,7 +9,6 @@ $data = "username=$username&password=$password";
 // Create Session Endpoint
 $info = api_call('create_session', $data);
 
-
 if ($info[0] == "Status: OK") { // This contains the status response from the API
     $sid = $info[2]; //contains current active session id
     $data = "uid=$username&sid=$sid";
