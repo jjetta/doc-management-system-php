@@ -4,5 +4,4 @@ function log_message($message) {
     $date = date('Y-m-d H:i:s');
     file_put_contents($log_file, "[$date] $message\n", FILE_APPEND);
 }
-?>
 

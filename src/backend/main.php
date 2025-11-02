@@ -41,4 +41,3 @@ $info = api_call('create_session', $data);
 /*    // Close Session Endpoint*/
 /*    $info = api_call('close_session', $data);*/
 /*}*/
-?>

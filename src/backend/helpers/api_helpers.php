@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../config/db.php';
 require_once 'log_helpers.php';
 
+$dblink = get_dblink();
+
 $api_url = 'https://cs4743.professorvaladez.com/api/';
 
 function api_call($endpoint, $data) {
@@ -17,11 +19,11 @@ function api_call($endpoint, $data) {
 
     $response = curl_exec($ch);
     if ($response === false) {
-        echo "CURL ERROR: " . curl_error($ch));
+        log_message("CURL ERROR: " . curl_error($ch));
     }
     curl_close($ch);
 
-    echo "API CALL SUCCESSFUL: " . var_dump($response);
+    log_message("CALL TO " . $endpoint . "SUCCESSFUL");
 
     return json_decode($response, true);
 }
@@ -43,5 +45,3 @@ function get_latest_session_id() {
     $row = $result->fetch_assoc();
     return $row['sid'] ?? null;
 }
-?>
-

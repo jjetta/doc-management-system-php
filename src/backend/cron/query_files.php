@@ -8,26 +8,26 @@ $username = getenv('API_USER');
 
 $data = "uid=$username&sid=$sid";
 $info = api_call('query_files', $data);
+$files = generate_files($info);
 
-if (empty($info['files'])) {
+if (empty($files)) {
     log_message("[query_files] No files returned by API");
     exit;
 }
 
-foreach ($info['files'] as $file) {
-    $filename = $file['filename'];
+$dblink = get_dblink();
 
-    // Extract loan number (before the first hyphen)
-    $parts = explode('-', $filename, 3);
-    if (count($parts) < 2) {
-        log_message("[query_files] Skipping invalid filename format: $filename");
+foreach ($files as $file) {
+
+    // Extract loan number, document type, and timestamp
+    list($loan_number, $doctype, $timestamp) = explode("-", $file);
+    if (!str_ends_with($file, ".pdf")) { // might need extra checks to verify that it's a pdf
+        log_message("[query_files] Skipping invalid filename format: $file");
         continue;
     }
 
-    $loan_number = $parts[0];
-
     // Query for loan_id using the loan_number
-    $stmt = $mysqli->prepare("SELECT id FROM loans WHERE loan_number = ?");
+    $stmt = $dblink->prepare("SELECT id FROM loans WHERE loan_number = ?");
     $stmt->bind_param("s", $loan_number);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -36,18 +36,16 @@ foreach ($info['files'] as $file) {
         $loan_id = $row['id'];
 
         // Insert the document record
-        $insert = $mysqli->prepare("INSERT INTO documents (loan_id, filename, status) VALUES (?, ?, 'pending')");
-        $insert->bind_param("is", $loan_id, $filename);
+        $insert = $dblink->prepare("INSERT INTO documents (loan_id, file_name, status) VALUES (?, ?, 'pending')");
+        $insert->bind_param("is", $loan_id, $file);
         $insert->execute();
 
-        log_message("[query_files] Document queued: $filename (Loan ID $loan_id)");
+        log_message("[query_files] Document queued for download: $file (Loan ID: $loan_id)");
     } else {
-        log_message("[query_files] Loan number not found: $loan_number (File: $filename)");
+        log_message("[query_files] Loan number not found: $loan_number (File: $file)");
     }
 
     $stmt->close();
 }
 
 log_message("[query_files] Completed document queueing process.");
-?>
-

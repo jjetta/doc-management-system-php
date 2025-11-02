@@ -6,4 +6,3 @@ $password = getenv('API_PASS');
 
 $data = "username=$username&password=$password";
 api_call('clear_session', $data);
-?>

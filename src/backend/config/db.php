@@ -1,16 +1,22 @@
 <?php
-$host = getenv('DB_HOST') ?: 'localhost';
-$user = getenv('DB_USER') ?: 'webuser';
-$pass = getenv('DB_PASS') ?: '7f//]ra2vDw(b8HD';
-$db   = getenv('DB_NAME') ?: 'document_management';
+function get_dblink(): mysqli {
+    static $dblink = null;
 
-// Create a MySQLi connection
-$dblink = new mysqli($host, $user, $pass, $db);
+    if ($dblink === null) {
+        $host = getenv('DB_HOST');
+        $user = getenv('DB_USER');
+        $pass = getenv('DB_PASS');
+        $db   = getenv('DB_NAME');
 
-// Check connection
-if ($dblink->connect_errno) {
-    echo "Failed to connect to MySQL: " . $dblink->connect_error;
-    throw new RuntimeException("Database connection error. Check logs for details.");
+        $dblink = new mysqli($host, $user, $pass, $db);
+
+        // Check connection
+        if ($dblink->connect_errno) {
+            error_log("Failed to connect to MySQL: " . $dblink->connect_error);
+            throw new RuntimeException("Database connection error. Check logs for details.");
+        }
+    }
+
+    return $dblink;
 }
-
 
