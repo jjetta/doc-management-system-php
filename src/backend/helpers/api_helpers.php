@@ -23,8 +23,6 @@ function api_call($endpoint, $data) {
     }
     curl_close($ch);
 
-    log_message($endpoint . " SUCCESSFUL");
-
     return json_decode($response, true);
 }
 
