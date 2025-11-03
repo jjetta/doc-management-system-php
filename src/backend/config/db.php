@@ -5,7 +5,7 @@ function get_dblink(): mysqli {
     if ($dblink === null) {
         $host = getenv('DB_HOST');
         $user = getenv('DB_USER');
-        $pass = getenv('DB_PASS');
+        $pass = base64_decode(getenv('DB_PASS'));
         $db   = getenv('DB_NAME');
 
         $dblink = new mysqli($host, $user, $pass, $db);
