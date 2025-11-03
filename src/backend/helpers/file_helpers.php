@@ -32,10 +32,10 @@ function zip_loan($loan_id) {
     }
 }
 
-function generate_files($info) {
+function generate_files($response_info) {
     log_message("Generating files...");
 
-    $tmp = explode(":", $info[1]);
+    $tmp = explode(":", $response_info[1]);
     $files = json_decode($tmp[1]);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -43,11 +43,15 @@ function generate_files($info) {
         return [];
     }
 
-    log_message("INFO: Number of files received: " . count($files));
+    if (empty($files)) {
+        log_message("[query_files] No files returned by API");
+    } else {
+        log_message("[INFO]: Number of files received: " . count($files));
+    }
 
-    log_message("INFO: Files received: " . print_r($files, true));
+    log_message("[INFO]: Files received: " . print_r($files, true));
 
-    log_message("INFO: Starting file download process...");
+    log_message("[INFO]: Starting file download process...");
 
     return $files;
 }

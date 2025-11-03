@@ -26,60 +26,85 @@ function api_call($endpoint, $data) {
     }
     curl_close($ch);
 
-    $info = json_decode($response);
+    $response_info = json_decode($response);
 
     log_message("[API RESPONSE]");
-    log_message($info[0]);
-    log_message($info[1]);
-    log_message($info[2]);
+    log_message($response_info[0]);
+    log_message($response_info[1]);
+    log_message($response_info[2]);
     log_message("------------------------------------------------");
 
-    return json_decode($response, true);
+    return $response_info;
 }
 
 function save_session($sid) {
     global $dblink;
+
     $stmt = $dblink->prepare("INSERT INTO api_sessions (session_id) VALUES (?)");
-    $stmt->bind_param("s", $sid);
-    if (!$stmt->execute()) {
-        log_message("DB ERROR: Failed to save session $sid - " . $stmt->error);
-    } else {
-        log_message("Session saved: $sid");
+    if (!$stmt) {
+        log_message("[DB ERROR] Failed to prepare statement - " . $dblink->error);
+        return false;
+    }
+
+    try {
+        $stmt->bind_param("s", $sid);
+        if (!$stmt->execute()) {
+            log_message("[DB ERROR] Failed to save session $sid - " . $stmt->error);
+            return false;
+        } else {
+            log_message("Session saved: $sid");
+            return true;
+        }
+    } finally {
+        $stmt->close();
     }
 }
 
 function expire_session($sid) {
     global $dblink;
+
     $stmt = $dblink->prepare("UPDATE api_sessions SET expired_at = NOW() WHERE session_id = ?");
-    $stmt->bind_param("s", $sid);
-    if (!$stmt->execute()) {
-        log_message("DB ERROR: Failed to update session $sid expiry - " . $stmt->error);
-    } else {
-        log_message("Session closed/expired: $sid");
+    if (!$stmt) {
+        log_message("[DB ERROR] Failed to prepare update statement - " . $dblink->error);
+        return false;
     }
+
+    try {
+        $stmt->bind_param("s", $sid);
+        if (!$stmt->execute()) {
+            log_message("[DB ERROR] Failed to update session $sid expiry - " . $stmt->error);
+            return false;
+        } else {
+            log_message("Session closed/expired: $sid");
+            return true;
+        }
+    } finally {
+        $stmt->close();
+    }
+
 }
 
 function get_latest_session_id() {
     global $dblink;
+
     log_message("Fetching lastest session id...");
 
     $result = $dblink->query("SELECT session_id FROM api_sessions ORDER BY created_at DESC LIMIT 1");
 
     if (!$result) {
-        log_message("[DB ERROR]: Failed to execute query. - " . $dblink->error);
+        log_message("[DB ERROR] Failed to execute query. - " . $dblink->error);
         return null;
     }
 
+    $sid = null;
     $row = $result->fetch_assoc();
-
     if ($row && isset($row['session_id'])) {
         $sid = $row['session_id'];
         log_message("Latest session ID found: $sid");
-        return $sid;
     } else {
         log_message("No sessions found in api_sessions table.");
-        return null;
     }
 
-    return $row['session_id'];
+    $result->close();
+    return $sid;
 }

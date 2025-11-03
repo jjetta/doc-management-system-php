@@ -1,8 +1,6 @@
 <?php
 require_once '../helpers/api_helpers.php';
 
-echo "[CRON]: starting create_session script";
-
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = "username=$username&password=$password";
@@ -22,4 +20,3 @@ if ($info[0] === "Status: OK") {
     }
 }
 
-echo "[CRON]: create_session script finished";
