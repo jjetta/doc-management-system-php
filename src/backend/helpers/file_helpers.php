@@ -3,8 +3,7 @@ require_once 'log_helpers.php';
 
 define('FILE_STORAGE', '/var/www/loan_system_files');
 
-function write_file($loan_id, $filename, $contents)
-{
+function write_file($loan_id, $filename, $contents) {
     $loan_dir = FILE_STORAGE . "/$loan_id";
 
     if (!is_dir($loan_dir)) {
@@ -17,8 +16,7 @@ function write_file($loan_id, $filename, $contents)
     log_message("File written: $file_path");
 }
 
-function zip_loan($loan_id)
-{
+function zip_loan($loan_id) {
     $loan_dir = FILE_STORAGE . "/$loan_id";
     $zip_file = FILE_STORAGE . "/$loan_id.zip";
 
@@ -34,8 +32,7 @@ function zip_loan($loan_id)
     }
 }
 
-function generate_files($info)
-{
+function generate_files($info) {
     log_message("Generating files...");
 
     $tmp = explode(":", $info[1]);

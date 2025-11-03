@@ -23,19 +23,19 @@ function api_call($endpoint, $data) {
     }
     curl_close($ch);
 
-    log_message("CALL TO " . $endpoint . "SUCCESSFUL");
+    log_message($endpoint . " SUCCESSFUL");
 
     return json_decode($response, true);
 }
 
 function save_session($sid) {
     global $dblink;
-    $stmt = $dblink->prepare("INSERT INTO api_sessions (sid) VALUES (?)");
+    $stmt = $dblink->prepare("INSERT INTO api_sessions (session_id) VALUES (?)");
     $stmt->bind_param("s", $sid);
     if (!$stmt->execute()) {
         log_message("DB ERROR: Failed to save session $sid");
     } else {
-        log_message("Session created: $sid");
+        log_message("Session saved: $sid");
     }
 }
 

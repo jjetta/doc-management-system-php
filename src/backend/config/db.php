@@ -12,11 +12,10 @@ function get_dblink(): mysqli {
 
         // Check connection
         if ($dblink->connect_errno) {
-            error_log("Failed to connect to MySQL: " . $dblink->connect_error);
+            log_message("Failed to connect to MySQL: " . $dblink->connect_error);
             throw new RuntimeException("Database connection error. Check logs for details.");
         }
     }
-
     return $dblink;
 }
 
