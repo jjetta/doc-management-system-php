@@ -8,6 +8,9 @@ $api_url = 'https://cs4743.professorvaladez.com/api/';
 
 function api_call($endpoint, $data) {
     global $api_url;
+
+    log_message("Calling endpoint: " . $api_url . $endpoint);
+
     $ch = curl_init($api_url . $endpoint);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);

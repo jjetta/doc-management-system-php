@@ -3,6 +3,8 @@ require_once '../helpers/api_helpers.php';
 require_once '../config/db.php';
 require_once '../helpers/log_helpers.php';
 
+echo "[CRON]: starting query_files script";
+
 $sid = get_latest_session_id();
 $username = getenv('API_USER');
 
@@ -49,3 +51,5 @@ foreach ($files as $file) {
 }
 
 log_message("[query_files] Completed document queueing process.");
+
+echo "[CRON]: query_files finished";

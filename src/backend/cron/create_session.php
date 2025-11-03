@@ -1,11 +1,12 @@
 <?php
 require_once '../helpers/api_helpers.php';
 
+echo "[CRON]: starting create_session script";
+
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = "username=$username&password=$password";
 
-log_message("Calling endpoint: " . $api_url . "create_session");
 $info = api_call('create_session', $data);
 
 if ($info[0] === "Status: OK") {
@@ -21,3 +22,4 @@ if ($info[0] === "Status: OK") {
     }
 }
 
+echo "[CRON]: create_session script finished";
