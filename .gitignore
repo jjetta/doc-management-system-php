@@ -1,3 +1,4 @@
 .env
 _notes/
 .DS_Store
+.todo
