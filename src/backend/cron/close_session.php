@@ -1,5 +1,5 @@
 <?php
-require_once '../helpers/api_helpers.php';
+require_once __DIR__ . '../helpers/api_helpers.php';
 
 $sid = get_latest_session_id();
 $data = "sid=$sid";

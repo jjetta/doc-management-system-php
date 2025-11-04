@@ -1,6 +1,6 @@
 <?php
-require_once '../helpers/file_helpers.php';
-require_once '../config/db.php';
+require_once __DIR__ . '../helpers/file_helpers.php';
+require_once __DIR__ . '../config/db.php';
 
 $dblink = get_dblink();
 
