@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/helpers/api_helpers.php';
 $SCRIPT_NAME = basename(__FILE__);
-echo "[DEBUG] create_session.php is running\n";
 
 $username = getenv('API_USER');
 $password = getenv('API_PASS');

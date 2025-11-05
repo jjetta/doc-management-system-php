@@ -43,6 +43,8 @@ function save_session($sid) {
     global $dblink;
     global $SCRIPT_NAME;
 
+    log_message("Saving session...");
+
     $stmt = $dblink->prepare("INSERT INTO api_sessions (session_id) VALUES (?)");
     if (!$stmt) {
         log_message("[DB ERROR] Failed to prepare statement - " . $dblink->error, $SCRIPT_NAME);
@@ -63,11 +65,13 @@ function save_session($sid) {
     }
 }
 
-function expire_session($sid) {
+function close_session($sid) {
     global $dblink;
     global $SCRIPT_NAME;
 
-    $stmt = $dblink->prepare("UPDATE api_sessions SET expired_at = NOW() WHERE session_id = ?");
+    log_message("Closing session...", $SCRIPT_NAME);
+
+    $stmt = $dblink->prepare("UPDATE api_sessions SET closed_at = NOW() WHERE session_id = ?");
     if (!$stmt) {
         log_message("[DB ERROR] Failed to prepare update statement - " . $dblink->error, $SCRIPT_NAME);
         return false;
@@ -76,10 +80,10 @@ function expire_session($sid) {
     try {
         $stmt->bind_param("s", $sid);
         if (!$stmt->execute()) {
-            log_message("[DB ERROR] Failed to update session $sid expiry - " . $stmt->error, $SCRIPT_NAME);
+            log_message("[DB ERROR] Failed to update session $sid close - " . $stmt->error, $SCRIPT_NAME);
             return false;
         } else {
-            log_message("Session closed/expired: $sid", $SCRIPT_NAME);
+            log_message("Session closed: $sid", $SCRIPT_NAME);
             return true;
         }
     } finally {

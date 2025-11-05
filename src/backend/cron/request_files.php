@@ -1,18 +1,12 @@
 <?php
-require_once __DIR__ . '/helpers/api_helpers.php';
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/helpers/log_helpers.php';
-require_once __DIR__ . '/helpers/file_helpers.php';
+require_once __DIR__ . '../helpers/api_helpers.php';
+require_once __DIR__ . '../helpers/file_helpers.php';
+require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '../helpers/log_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
-$sid = get_latest_session_id();
-$username = getenv('API_USER');
-
-$data = "uid=$username&sid=$sid";
-$api_response = api_call('query_files', $data);
-
-$files = generate_files($api_response);
+$files = require_once __DIR__ . '../cron/query_files.php';
 
 $dblink = get_dblink();
 

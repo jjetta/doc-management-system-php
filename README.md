@@ -31,7 +31,7 @@ The Loan Document Management System automates the workflow of retrieving, organi
 
 * **Cron Job Automation**
 
-  * Scripts are scheduled to run automatically for creating sessions, querying files, downloading pending files, zipping loans, and closing sessions.
+  * Scripts are scheduled to run automatically for creating sessions, querying files, downloading pending files, and closing sessions.
   * A single consolidated log file simplifies monitoring and allows easy log rotation.
 
 ---
@@ -40,10 +40,11 @@ The Loan Document Management System automates the workflow of retrieving, organi
 
 The system uses four primary tables:
 
-1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`, `expired_at`).
+1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`, `closed_at`).
 2. **`loans`** – Stores loan records, each identified by a `loan_number`.
 3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`, `status`).
 4. **`document_types`** – Stores unique document types.
+5. **`document_contents`** - Stores the actual BLOB contents of the pdfs.
 
 ---
 

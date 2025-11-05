@@ -1,38 +1,16 @@
 <?php
 require_once 'log_helpers.php';
+require_once '../../config/db.php';
 
 define('FILE_STORAGE', '/var/www/loan_system_files');
 $SCRIPT_NAME = basename(__FILE__);
 
-function write_file($loan_id, $filename, $contents) {
+function write_file_to_db($loan_id, $filename, $contents) {
     global $SCRIPT_NAME;
-    $loan_dir = FILE_STORAGE . "/$loan_id";
+    $dblink = get_dblink();
 
-    if (!is_dir($loan_dir)) {
-        mkdir($loan_dir, 0750, true);
-    }
-
-    $file_path = "$loan_dir/$filename";
-    file_put_contents($file_path, $contents);
 
     log_message("File written: $file_path", $SCRIPT_NAME);
-}
-
-function zip_loan($loan_id) {
-    global $SCRIPT_NAME;
-    $loan_dir = FILE_STORAGE . "/$loan_id";
-    $zip_file = FILE_STORAGE . "/$loan_id.zip";
-
-    $zip = new ZipArchive();
-    if ($zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-        foreach (glob("$loan_dir/*.pdf") as $f) {
-            $zip->addFile($f, basename($f));
-        }
-        $zip->close();
-        log_message("Loan $loan_id zipped to $zip_file", $SCRIPT_NAME);
-    } else {
-        log_message("ERROR: Could not create zip for loan $loan_id", $SCRIPT_NAME);
-    }
 }
 
 function generate_files($response_info) {
@@ -64,7 +42,7 @@ function save_doctype_if_new($dblink, $doctype) {
     global $SCRIPT_NAME;
 
     // Normalize the doctype: remove trailing "_{number}" if present
-    $clean_doctype = preg_replace('/_\d+$/', '', $doctype);
+    $doctype = get_doctype_from_filename($doctype);
 
     // Check if the doctype exists
     $select_stmt = $dblink->prepare("SELECT doctype_id FROM document_types WHERE doctype = ?");
@@ -74,7 +52,7 @@ function save_doctype_if_new($dblink, $doctype) {
     }
 
     try {
-        $select_stmt->bind_param("s", $clean_doctype);
+        $select_stmt->bind_param("s", $doctype);
         if (!$select_stmt->execute()) {
             log_message("[DB ERROR] Failed to execute SELECT statement - " . $select_stmt->error, $SCRIPT_NAME);
             return;
@@ -87,7 +65,7 @@ function save_doctype_if_new($dblink, $doctype) {
     }
 
     if ($exists) {
-        log_message("[doctypes] Doctype already exists: $clean_doctype", $SCRIPT_NAME);
+        log_message("[doctypes] Doctype already exists: $doctype", $SCRIPT_NAME);
         return;
     }
 
@@ -99,14 +77,39 @@ function save_doctype_if_new($dblink, $doctype) {
     }
 
     try {
-        $insert_stmt->bind_param("s", $clean_doctype);
+        $insert_stmt->bind_param("s", $doctype);
         if ($insert_stmt->execute()) {
-            log_message("[doctypes] Added new doctype: $clean_doctype", $SCRIPT_NAME);
+            log_message("[doctypes] Added new doctype: $doctype", $SCRIPT_NAME);
         } else {
-            log_message("[DB ERROR][doctypes] Failed to insert $clean_doctype: " . $insert_stmt->error, $SCRIPT_NAME);
+            log_message("[DB ERROR][doctypes] Failed to insert $doctype: " . $insert_stmt->error, $SCRIPT_NAME);
         }
     } finally {
         $insert_stmt->close();
     }
+}
+
+function extract_file_parts($file) {
+    global $SCRIPT_NAME;
+    // Extract loan number, document type, and timestamp
+    $file_parts = explode("-", $file);
+
+    // Validate filename format and type
+    if (count($file_parts) !== 3 || !str_ends_with($file, "pdf")) {
+        log_message("Skipping invalid filename: $file", $SCRIPT_NAME);
+    }
+
+    return $file_parts;
+
+}
+
+function get_doctype_from_filename($doctype) {
+    // Remove trailing underscore + number
+    $doctype = preg_replace('/_\d+$/', '', $doctype);
+
+    // Remove trailing 's' (case-insensitive)
+    $doctype = preg_replace('/s$/i', '', $doctype);
+
+    // Replace underscores inside the name with spaces
+    $doctype = str_replace('_', ' ', $doctype);
 }
 
