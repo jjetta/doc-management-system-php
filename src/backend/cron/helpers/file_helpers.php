@@ -1,16 +1,13 @@
 <?php
 require_once 'log_helpers.php';
-require_once '../../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 define('FILE_STORAGE', '/var/www/loan_system_files');
 $SCRIPT_NAME = basename(__FILE__);
 
+
 function write_file_to_db($loan_id, $filename, $contents) {
     global $SCRIPT_NAME;
-    $dblink = get_dblink();
-
-
-    log_message("File written: $file_path", $SCRIPT_NAME);
 }
 
 function generate_files($response_info) {
@@ -33,7 +30,7 @@ function generate_files($response_info) {
 
     log_message("[INFO]: Files received: " . print_r($files, true), $SCRIPT_NAME);
 
-    log_message("[INFO]: Starting file download process...", $SCRIPT_NAME);
+    log_message("[INFO]: Starting metadata saving process...", $SCRIPT_NAME);
 
     return $files;
 }
@@ -113,3 +110,56 @@ function get_doctype_from_filename($doctype) {
     $doctype = str_replace('_', ' ', $doctype);
 }
 
+function ensure_loan_exists($dblink, $loan_number) {
+    global $SCRIPT_NAME;
+
+    // Check if the loan already exists
+    $select_query = "SELECT loan_id FROM loans WHERE loan_number = ?";
+    $select_stmt = $dblink->prepare($select_query);
+    if (!$select_stmt) {
+        log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
+        return null; 
+    }
+
+    try {
+        $select_stmt->bind_param("s", $loan_number);
+        if (!$select_stmt->execute()) {
+            log_message("[DB ERROR][ensure_loan_exists] Failed to execute SELECT statement - " . $dblink->error, $SCRIPT_NAME);
+            return null;
+        } 
+
+        $result = $select_stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            return $row['loan_id'];
+        }
+
+    } finally {
+        if (isset($select_stmt) && $select_stmt instanceof mysqli_stmt) {
+            $select_stmt->close();
+        }
+    }
+
+    // Insert the loan if not found
+    $insert_query = "INSERT INTO loans (loan_number) VALUES (?)";
+    $insert_stmt = $dblink->prepare($insert_query);
+    if (!$insert_stmt) {
+        log_message("[DB ERROR] Failed to prepare INSERT - " . $dblink->error, $SCRIPT_NAME);
+        return null;
+    }
+
+    try {
+        $insert_stmt->bind_param("s", $loan_number);
+        if (!$insert_stmt->execute()) {
+            log_message("[DB ERROR][ensure_loan_exists] Failed to execute INSERT -  " . $dblink->error, $SCRIPT_NAME);
+            return null;
+        }
+
+        log_message("[INFO] New loan inserted: $loan_number", $SCRIPT_NAME);
+        return $insert_stmt->insert_id;
+
+    } finally {
+        if (isset($insert_stmt) && $insert_stmt instanceof mysqli_stmt) {
+            $insert_stmt->close();
+        }
+    }
+}

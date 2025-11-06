@@ -43,7 +43,7 @@ function save_session($sid) {
     global $dblink;
     global $SCRIPT_NAME;
 
-    log_message("Saving session...");
+    log_message("Saving session...", $SCRIPT_NAME);
 
     $stmt = $dblink->prepare("INSERT INTO api_sessions (session_id) VALUES (?)");
     if (!$stmt) {
