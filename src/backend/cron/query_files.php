@@ -12,7 +12,7 @@ $data = "uid=$username&sid=$sid";
 
 $api_response = api_call('query_files', $data);
 
-if ($api_response[1] == "MSG: No new files found") {
+if ($api_response[1] == "MSG: No new files found" || $api_response[1] == "MSG: []") {
     log_message("[INFO] No files to query. Moving along.", $SCRIPT_NAME);
     exit(0);
 }
@@ -38,12 +38,16 @@ foreach ($files as $file) {
     $docname = $file_parts[1];
     $doctype_id = save_doctype_if_new($dblink, $docname);
 
+    // Update loans table
     $loan_number = $file_parts[0];
-
     $loan_id = ensure_loan_exists($dblink, $loan_number);
     if ($loan_id === null) {
         log_message("[ERROR] Could not ensure loan exists for $loan_number", $SCRIPT_NAME);
     }
+
+    // Update documents table with file metadata
+    log_message("Saving file metadata... ", $SCRIPT_NAME);
+    save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id);
 }
 log_message("[INFO] Processing complete.", $SCRIPT_NAME );
 log_message("----------------------------------------------", $SCRIPT_NAME);

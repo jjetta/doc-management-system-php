@@ -30,8 +30,6 @@ function generate_files($response_info) {
 
     log_message("[INFO]: Files received: " . print_r($files, true), $SCRIPT_NAME);
 
-    log_message("[INFO]: Starting metadata saving process...", $SCRIPT_NAME);
-
     return $files;
 }
 
@@ -48,7 +46,7 @@ function save_doctype_if_new($dblink, $docname) {
 
     // Check if the doctype exists
     $select_query = "SELECT doctype_id FROM document_types WHERE doctype = ?";
-    $select_stmt = $dblink->prepare($select_query);
+$select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
         log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
         return null;
@@ -96,20 +94,6 @@ function save_doctype_if_new($dblink, $docname) {
             $insert_stmt->close();
         }
     }
-}
-
-function extract_file_parts($file) {
-    global $SCRIPT_NAME;
-    // Extract loan number, document type, and timestamp
-    $file_parts = explode("-", $file);
-
-    // Validate filename format and type
-    if (count($file_parts) !== 3 || !str_ends_with($file, "pdf")) {
-        log_message("Skipping invalid filename: $file", $SCRIPT_NAME);
-    }
-
-    return $file_parts;
-
 }
 
 function get_doctype_from_filename($docname) {
@@ -177,4 +161,55 @@ function ensure_loan_exists($dblink, $loan_number) {
             $insert_stmt->close();
         }
     }
+}
+
+function save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id) {
+    global $SCRIPT_NAME;
+
+    $mysql_ts = get_mysql_ts($file_parts[2]);
+
+    $insert_query = "INSERT INTO documents (loan_id, doctype_id, uploaded_at, file_name) VALUES (?, ?, ?, ?)";
+    $insert_stmt = $dblink->prepare($insert_query);
+    if (!$insert_stmt) {
+        log_message("[DB ERROR] Failed to prepare INSERT statement - " . $dblink->error, $SCRIPT_NAME);
+    }
+
+    try {
+        $insert_stmt->bind_param("iiss", $loan_id, $doctype_id, $mysql_ts, $file_parts[1]);
+        if (!$insert_stmt->execute()) {
+            log_message("[DB ERROR][save_file_metadata] Failed to execute INSERT - " . $dblink->error, $SCRIPT_NAME);
+        }
+
+        log_message("[save_file_metadata] Metadata saved for $file_parts[0]-$file_parts[1]-$file_parts[2]", $SCRIPT_NAME);
+    } finally {
+        if (isset($insert_stmt) && $insert_stmt instanceof mysqli_stmt) {
+            $insert_stmt->close();
+        }
+    }
+}
+
+function get_mysql_ts($raw_ts) {
+    // Remove the file extension if present
+    $raw_ts = pathinfo($raw_ts, PATHINFO_FILENAME);
+
+    // Validate input
+    if (!$raw_ts) {
+        return null;
+    }
+
+    // Use regex to ensure correct format: YYYYMMDD_HH_MM_SS
+    if (!preg_match('/^(\d{8})_(\d{2})_(\d{2})_(\d{2})$/', $raw_ts, $matches)) {
+        return null; // invalid format
+    }
+
+    $date_part = $matches[1]; // YYYYMMDD
+    $hour = $matches[2];
+    $minute = $matches[3];
+    $second = $matches[4];
+
+    // Build MySQL TIMESTAMP string
+    $mysql_ts = substr($date_part, 0, 4) . '-' . substr($date_part, 4, 2) . '-' . substr($date_part, 6, 2)
+                . ' ' . $hour . ':' . $minute . ':' . $second;
+
+    return $mysql_ts;
 }
