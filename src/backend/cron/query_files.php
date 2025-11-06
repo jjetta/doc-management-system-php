@@ -11,22 +11,41 @@ $username = getenv('API_USER');
 $data = "uid=$username&sid=$sid";
 
 $api_response = api_call('query_files', $data);
+
+if ($api_response[1] == "MSG: No new files found") {
+    log_message("[INFO] No files to query. Moving along.", $SCRIPT_NAME);
+    exit(0);
+}
+
 $files = generate_files($api_response);
 
 $dblink = get_dblink();
 
-log_message("[INFO] Inserting loan ids into database...", $SCRIPT_NAME);
+log_message("[INFO] Processing loan ids and document_types...", $SCRIPT_NAME);
 foreach ($files as $file) {
 
     $file_parts = explode("-", $file);
+
+    // Validate filename format and type
+    if (count($file_parts) !== 3 || !str_ends_with($file, "pdf")) {
+        log_message("Skipping invalid filename: $file", $SCRIPT_NAME);
+        continue;
+    }
+
+    list($loan_number, $docname, $timestamp) = $file_parts;
+
+    // Update document_types table
+    $docname = $file_parts[1];
+    $doctype_id = save_doctype_if_new($dblink, $docname);
+
     $loan_number = $file_parts[0];
 
     $loan_id = ensure_loan_exists($dblink, $loan_number);
     if ($loan_id === null) {
         log_message("[ERROR] Could not ensure loan exists for $loan_number", $SCRIPT_NAME);
-        continue;
     }
 }
-log_message("[INFO] Loan number processing complete.", $SCRIPT_NAME );
+log_message("[INFO] Processing complete.", $SCRIPT_NAME );
 log_message("----------------------------------------------", $SCRIPT_NAME);
 
+return $files;

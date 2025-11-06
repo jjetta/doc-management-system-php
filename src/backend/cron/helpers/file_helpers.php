@@ -35,53 +35,66 @@ function generate_files($response_info) {
     return $files;
 }
 
-function save_doctype_if_new($dblink, $doctype) {
+function save_doctype_if_new($dblink, $docname) {
     global $SCRIPT_NAME;
 
     // Normalize the doctype: remove trailing "_{number}" if present
-    $doctype = get_doctype_from_filename($doctype);
+    $doctype = get_doctype_from_filename($docname);
+
+    if (!$doctype) {
+        log_message("[ERROR] Could not determine doctype for filename: $docname", $SCRIPT_NAME);
+        return null;
+    }
 
     // Check if the doctype exists
-    $select_stmt = $dblink->prepare("SELECT doctype_id FROM document_types WHERE doctype = ?");
+    $select_query = "SELECT doctype_id FROM document_types WHERE doctype = ?";
+    $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
         log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
-        return;
+        return null;
     }
 
     try {
         $select_stmt->bind_param("s", $doctype);
         if (!$select_stmt->execute()) {
             log_message("[DB ERROR] Failed to execute SELECT statement - " . $select_stmt->error, $SCRIPT_NAME);
-            return;
+            return null;
         }
 
-        $select_stmt->store_result();
-        $exists = $select_stmt->num_rows > 0;
+        $result = $select_stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            // Document type already exists
+            return $row['doctype_id'];
+        }
+
     } finally {
-        $select_stmt->close();
+        if (isset($select_stmt) && $select_stmt instanceof mysqli_stmt) {
+            $select_stmt->close();
+        }
     }
 
-    if ($exists) {
-        log_message("[doctypes] Doctype already exists: $doctype", $SCRIPT_NAME);
-        return;
-    }
-
-    // Insert new doctype
-    $insert_stmt = $dblink->prepare("INSERT INTO document_types (doctype) VALUES (?)");
+    // Insert new doctype if new 
+    $insert_query = "INSERT INTO document_types (doctype) VALUES (?)";
+    $insert_stmt = $dblink->prepare($insert_query);
     if (!$insert_stmt) {
         log_message("[DB ERROR] Failed to prepare INSERT statement - " . $dblink->error, $SCRIPT_NAME);
-        return;
+        return null;
     }
 
     try {
         $insert_stmt->bind_param("s", $doctype);
-        if ($insert_stmt->execute()) {
-            log_message("[doctypes] Added new doctype: $doctype", $SCRIPT_NAME);
-        } else {
+        if (!$insert_stmt->execute()) {
             log_message("[DB ERROR][doctypes] Failed to insert $doctype: " . $insert_stmt->error, $SCRIPT_NAME);
+            return null;
         }
+
+        log_message("[doctypes] Added new doctype: $doctype", $SCRIPT_NAME);
+        return $insert_stmt->insert_id;
+
     } finally {
-        $insert_stmt->close();
+        if (isset($insert_stmt) && $insert_stmt instanceof mysqli_stmt) {
+            $insert_stmt->close();
+        }
     }
 }
 
@@ -99,15 +112,17 @@ function extract_file_parts($file) {
 
 }
 
-function get_doctype_from_filename($doctype) {
+function get_doctype_from_filename($docname) {
     // Remove trailing underscore + number
-    $doctype = preg_replace('/_\d+$/', '', $doctype);
+    $docname = preg_replace('/_\d+$/', '', $docname);
 
     // Remove trailing 's' (case-insensitive)
-    $doctype = preg_replace('/s$/i', '', $doctype);
+    $docname = preg_replace('/s$/i', '', $docname);
 
     // Replace underscores inside the name with spaces
-    $doctype = str_replace('_', ' ', $doctype);
+    $docname = str_replace('_', ' ', $docname);
+
+    return $docname;
 }
 
 function ensure_loan_exists($dblink, $loan_number) {

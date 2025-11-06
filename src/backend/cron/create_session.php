@@ -6,18 +6,18 @@ $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = "username=$username&password=$password";
 
-$info = api_call('create_session', $data);
+$api_response = api_call('create_session', $data);
 
-if ($info[0] === "Status: OK") {
-    save_session($info[2]);
+if ($api_response[0] === "Status: OK") {
+    save_session($api_response[2]);
 } else {
-    log_message("Failed to create session. $info[2]", $SCRIPT_NAME);
-    if ($info[1] === "MSG: Previous Session Found"){
+    log_message("Failed to create session. $api_response[2]", $SCRIPT_NAME);
+    if ($api_response[1] === "MSG: Previous Session Found"){
         api_call('clear_session', $data);
 
         log_message("Retrying create_session...", $SCRIPT_NAME);
-        $retry_info = api_call('create_session', $data);
-        save_session($retry_info[2]);
+        $retry_api_response = api_call('create_session', $data);
+        save_session($retry_api_response[2]);
     }
 }
 
