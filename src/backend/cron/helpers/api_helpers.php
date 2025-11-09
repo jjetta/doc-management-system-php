@@ -23,7 +23,7 @@ function api_call($endpoint, $data, $binary = false) {
             'Content-Length: ' . strlen($data)
         ],
         CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT => 30
+        CURLOPT_TIMEOUT => 60
     ]);
 
     $response = curl_exec($ch);

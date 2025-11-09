@@ -13,8 +13,8 @@ $data = "uid=$username&sid=$sid";
 
 $query_files_response = api_call('query_files', $data);
 
-// retry in the event our sid got kicked
-if ($query_files_response[1] === "MSG: SID not found") {
+// retry in the event our sid got kicked or a timeout
+if (!$query_files_response || $query_files_response[1] === "MSG: SID not found") {
     log_message("[RETRY] Getting a new session_id...", $SCRIPT_NAME);
 
     $retry_data = "username=$username&password=$password";
