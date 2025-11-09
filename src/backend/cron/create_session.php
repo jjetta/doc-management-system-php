@@ -4,7 +4,10 @@ $SCRIPT_NAME = basename(__FILE__);
 
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
-$data = "username=$username&password=$password";
+$data = http_build_query([
+    'username' => $username,
+    'password' => $password
+]);
 
 $api_response = api_call('create_session', $data);
 

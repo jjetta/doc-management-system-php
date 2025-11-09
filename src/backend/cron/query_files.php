@@ -9,7 +9,10 @@ $SCRIPT_NAME = basename(__FILE__);
 $sid = get_latest_session_id2();
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
-$data = "uid=$username&sid=$sid";
+$data = http_build_query([
+    'uid' => $username,
+    'sid' => $sid
+]);
 
 $query_files_response = api_call('query_files', $data);
 
@@ -17,7 +20,10 @@ $query_files_response = api_call('query_files', $data);
 if (!$query_files_response || $query_files_response[1] === "MSG: SID not found") {
     log_message("[RETRY] Getting a new session_id...", $SCRIPT_NAME);
 
-    $retry_data = "username=$username&password=$password";
+    $retry_data = http_build_query([
+        'username' => $username,
+        'password' => $password
+    ]);
     api_call('clear_session', $retry_data);
 
     log_message("[RETRY] Retrying create_session...", $SCRIPT_NAME);
@@ -25,7 +31,10 @@ if (!$query_files_response || $query_files_response[1] === "MSG: SID not found")
     db_save_session($create_session_response[2]);
 
     $sid = get_latest_session_id2();
-    $data = "uid=$username&sid=$sid";
+    $data = http_build_query([
+        'uid' => $username,
+        'sid' => $sid
+    ]);
 
     $query_files_response = api_call('query_files', $data);
 }

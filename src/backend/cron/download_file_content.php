@@ -23,15 +23,23 @@ if (empty($pending_docs)) {
 log_message("Downloading files...", $SCRIPT_NAME);
 log_message("--------------------------------------------", $SCRIPT_NAME);
 foreach ($pending_docs as $document_id => $filename) {
-    $data = "sid=$sid&uid=$username&fid=$filename";
+    $data = http_build_query([
+        'sid' => $sid,
+        'uid' => $username,
+        'fid' => $filename
+    ]);
+
     $content = api_call('request_file', $data, true);
 
-    if ($content && mime_type_check($content)) {
-        write_file_to_db($dblink, $document_id, $content);
-    } else {
-        if (!$content) {
-            log_message("[WARN] File content not received.", $SCRIPT_NAME);
-        }
-        log_message("[WARN] Invalid file type. MIME type is not pdf.", $SCRIPT_NAME);
+    if (!$content) {
+        log_message("[WARN] File content not received.", $SCRIPT_NAME);
+        continue;
     }
+
+    if (!mime_type_check($content)) {
+        log_message("[WARN] Invalid file type. MIME type is not pdf.", $SCRIPT_NAME);
+        continue;
+    }
+
+    write_file_to_db($dblink, $document_id, $content);
 }
