@@ -61,7 +61,8 @@ function save_doctype_if_new($dblink, $doctype) {
     $doctype = get_doctype_from_filename($doctype);
 
     // Check if the doctype exists
-    $select_stmt = $dblink->prepare("SELECT doctype_id FROM document_types WHERE doctype = ?");
+    $select_query = "SELECT doctype_id FROM document_types WHERE doctype = ?";
+    $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
         log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
         return null;

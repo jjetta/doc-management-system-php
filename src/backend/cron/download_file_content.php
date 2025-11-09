@@ -6,7 +6,7 @@ require_once __DIR__ . '/helpers/log_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
-$sid = get_latest_session_id();
+$sid = get_latest_session_id2();
 $username = getenv('API_USER');
 
 $dblink = get_dblink();

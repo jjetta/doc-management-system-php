@@ -6,7 +6,7 @@ require_once __DIR__ . '/helpers/file_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
-$sid = get_latest_session_id();
+$sid = get_latest_session_id2();
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = "uid=$username&sid=$sid";
@@ -24,7 +24,7 @@ if (!$query_files_response || $query_files_response[1] === "MSG: SID not found")
     $create_session_response = api_call('create_session', $retry_data);
     db_save_session($create_session_response[2]);
 
-    $sid = get_latest_session_id();
+    $sid = get_latest_session_id2();
     $data = "uid=$username&sid=$sid";
 
     $query_files_response = api_call('query_files', $data);

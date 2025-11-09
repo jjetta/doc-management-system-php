@@ -135,3 +135,36 @@ function get_latest_session_id() {
     $result->close();
     return $sid;
 }
+
+function get_latest_session_id2() {
+    global $dblink;
+    global $SCRIPT_NAME;
+
+    log_message("Fetching latest session id...", $SCRIPT_NAME);
+
+    $select_query = "SELECT session_id FROM api_sessions ORDER BY created_at DESC LIMIT 1";
+    $select_stmt = $dblink->prepare($select_query);
+    if (!$select_stmt) {
+        log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
+        return null;
+    }
+
+    try {
+        if (!$select_stmt->execute()) {
+            log_message("[DB ERROR] Failed to execute SELECT statement - " . $dblink->error, $SCRIPT_NAME);
+            return null;
+        }
+
+        $latest_session_id = null;
+        $select_stmt->bind_result($latest_session_id);
+        if (!$select_stmt->fetch()) {
+            log_message("No sessions found in api_sessions table.", $SCRIPT_NAME);
+            return null;
+        }
+
+        log_message("Latest session ID found: $latest_session_id", $SCRIPT_NAME);
+        return $latest_session_id;
+    } finally {
+        $select_stmt->close();
+    }
+}
