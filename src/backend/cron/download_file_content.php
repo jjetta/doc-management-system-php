@@ -14,11 +14,16 @@ $dblink = get_dblink();
 // get the top 100 docs from the db whose status is pending and store them in an array
 $pending_docs = get_pending_docs($dblink);
 
+if (empty($pending_docs)) {
+    log_message("No documents pending. All good.", $SCRIPT_NAME);
+    exit(0);
+}
+
 foreach ($pending_docs as $document_id => $filename) {
     $data = "sid=$sid&uid=$username&fid=$filename";
-    $content = api_call('request_file', $data);
+    $content = api_call('request_file', $data, true);
 
-    if (mime_type_check($content)) {
+    if ($content && mime_type_check($content)) {
         write_file_to_db($dblink, $document_id, $content);
     } else {
         log_message("Invalid file type. MIME type is not pdf.", $SCRIPT_NAME);

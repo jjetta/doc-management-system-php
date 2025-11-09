@@ -13,6 +13,7 @@ $data = "uid=$username&sid=$sid";
 
 $query_files_response = api_call('query_files', $data);
 
+// retry in the event our sid got kicked
 if ($query_files_response[1] === "MSG: SID not found") {
     log_message("[RETRY] Getting a new session_id...", $SCRIPT_NAME);
 
@@ -29,6 +30,7 @@ if ($query_files_response[1] === "MSG: SID not found") {
     $query_files_response = api_call('query_files', $data);
 }
 
+// if there's no files, just exit
 if ($query_files_response[1] === "MSG: No new files found" || $query_files_response[1] === "MSG: []") {
     log_message("[INFO] No files to query. Moving along.", $SCRIPT_NAME);
     exit(0);

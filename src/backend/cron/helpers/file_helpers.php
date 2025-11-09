@@ -1,6 +1,6 @@
 <?php
 require_once 'log_helpers.php';
-require_once '../../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 define('FILE_STORAGE', '/var/www/loan_system_files');
 $SCRIPT_NAME = basename(__FILE__);
@@ -64,58 +64,45 @@ function save_doctype_if_new($dblink, $doctype) {
     $select_stmt = $dblink->prepare("SELECT doctype_id FROM document_types WHERE doctype = ?");
     if (!$select_stmt) {
         log_message("[DB ERROR] Failed to prepare SELECT statement - " . $dblink->error, $SCRIPT_NAME);
-        return;
+        return null;
     }
 
     try {
         $select_stmt->bind_param("s", $doctype);
         if (!$select_stmt->execute()) {
             log_message("[DB ERROR] Failed to execute SELECT statement - " . $select_stmt->error, $SCRIPT_NAME);
-            return;
+            return null;
         }
 
-        $select_stmt->store_result();
-        $exists = $select_stmt->num_rows > 0;
+        $doctype_id = null;
+        $select_stmt->bind_result($doctype_id);
+        if ($select_stmt->fetch()) {
+            return $doctype_id;
+        }
     } finally {
         $select_stmt->close();
-    }
-
-    if ($exists) {
-        log_message("[doctypes] Doctype already exists: $doctype", $SCRIPT_NAME);
-        return;
     }
 
     // Insert new doctype
     $insert_stmt = $dblink->prepare("INSERT INTO document_types (doctype) VALUES (?)");
     if (!$insert_stmt) {
         log_message("[DB ERROR] Failed to prepare INSERT statement - " . $dblink->error, $SCRIPT_NAME);
-        return;
+        return null;
     }
 
     try {
         $insert_stmt->bind_param("s", $doctype);
         if ($insert_stmt->execute()) {
+            $new_id = $dblink->insert_id;
             log_message("[doctypes] Added new doctype: $doctype", $SCRIPT_NAME);
+            return new_id;
         } else {
             log_message("[DB ERROR][doctypes] Failed to insert $doctype: " . $insert_stmt->error, $SCRIPT_NAME);
+            return null;
         }
     } finally {
         $insert_stmt->close();
     }
-}
-
-function extract_file_parts($file) {
-    global $SCRIPT_NAME;
-    // Extract loan number, document type, and timestamp
-    $file_parts = explode("-", $file);
-
-    // Validate filename format and type
-    if (count($file_parts) !== 3 || !str_ends_with($file, "pdf")) {
-        log_message("Skipping invalid filename: $file", $SCRIPT_NAME);
-    }
-
-    return $file_parts;
-
 }
 
 function get_doctype_from_filename($doctype) {
@@ -127,6 +114,8 @@ function get_doctype_from_filename($doctype) {
 
     // Replace underscores inside the name with spaces
     $doctype = str_replace('_', ' ', $doctype);
+
+    return $doctype;
 }
 
 function save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id) {
