@@ -11,11 +11,12 @@ $username = getenv('API_USER');
 
 $dblink = get_dblink();
 
-// get the top 100 docs from the db whose status is pending and store them in an array
+// get the top 100 docs from the db whose status is pending and store them in an associative array
+// where document_id => filename
 $pending_docs = get_pending_docs($dblink);
 
 if (empty($pending_docs)) {
-    log_message("No documents pending. All good.", $SCRIPT_NAME);
+    log_message("No documents pending download. All good.", $SCRIPT_NAME);
     exit(0);
 }
 

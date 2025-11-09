@@ -22,7 +22,7 @@ function api_call($endpoint, $data, $binary = false) {
             'Content-Type: application/x-www-form-urlencoded',
             'Content-Length: ' . strlen($data)
         ],
-        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 20,
         CURLOPT_TIMEOUT => 60
     ]);
 
