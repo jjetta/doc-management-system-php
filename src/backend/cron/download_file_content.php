@@ -20,6 +20,8 @@ if (empty($pending_docs)) {
     exit(0);
 }
 
+log_message("Downloading files...", $SCRIPT_NAME);
+log_message("--------------------------------------------");
 foreach ($pending_docs as $document_id => $filename) {
     $data = "sid=$sid&uid=$username&fid=$filename";
     $content = api_call('request_file', $data, true);
