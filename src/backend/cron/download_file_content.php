@@ -21,7 +21,7 @@ if (empty($pending_docs)) {
 }
 
 log_message("Downloading files...", $SCRIPT_NAME);
-log_message("--------------------------------------------");
+log_message("--------------------------------------------", $SCRIPT_NAME);
 foreach ($pending_docs as $document_id => $filename) {
     $data = "sid=$sid&uid=$username&fid=$filename";
     $content = api_call('request_file', $data, true);
@@ -32,6 +32,6 @@ foreach ($pending_docs as $document_id => $filename) {
         if (!$content) {
             log_message("[WARN] File content not received.", $SCRIPT_NAME);
         }
-        log_message("Invalid file type. MIME type is not pdf.", $SCRIPT_NAME);
+        log_message("[WARN] Invalid file type. MIME type is not pdf.", $SCRIPT_NAME);
     }
 }
