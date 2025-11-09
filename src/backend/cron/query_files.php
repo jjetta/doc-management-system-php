@@ -8,16 +8,38 @@ $SCRIPT_NAME = basename(__FILE__);
 
 $sid = get_latest_session_id();
 $username = getenv('API_USER');
+$password = getenv('API_PASS');
 $data = "uid=$username&sid=$sid";
 
-$api_response = api_call('query_files', $data);
+$query_files_response = api_call('query_files', $data);
 
-if ($api_response[1] == "MSG: No new files found" || $api_response[1] == "MSG: []") {
+if ($query_files_response[1] === "MSG: SID not found") {
+    log_message("[RETRY] Getting a new session_id...", $SCRIPT_NAME);
+
+    $retry_data = "username=$username&password=$password";
+    api_call('clear_session', $retry_data);
+
+    log_message("[RETRY] Retrying create_session...", $SCRIPT_NAME);
+    $create_session_response = api_call('create_session', $retry_data);
+    db_save_session($create_session_response[2]);
+
+    $sid = get_latest_session_id();
+    $data = "uid=$username&sid=$sid";
+
+    $query_files_response = api_call('query_files', $data);
+}
+
+if ($query_files_response[1] === "MSG: No new files found" || $query_files_response[1] === "MSG: []") {
     log_message("[INFO] No files to query. Moving along.", $SCRIPT_NAME);
     exit(0);
 }
 
-$files = generate_files($api_response);
+if ($query_files_response[0] === "Status: OK") {
+    $files = generate_files($query_files_response);
+} else {
+    log_message("[ERROR] API returned unexpected status or format.", $SCRIPT_NAME);
+    exit(1);
+}
 
 $dblink = get_dblink();
 
@@ -46,7 +68,6 @@ foreach ($files as $file) {
     }
 
     // Update documents table with file metadata
-    log_message("Saving file metadata... ", $SCRIPT_NAME);
     save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id);
 }
 log_message("[INFO] Processing complete.", $SCRIPT_NAME );

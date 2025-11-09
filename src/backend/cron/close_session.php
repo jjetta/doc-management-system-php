@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '../helpers/api_helpers.php';
+require_once __DIR__ . '/../helpers/api_helpers.php';
 
 $sid = get_latest_session_id();
 $data = "sid=$sid";
 
 api_call('close_session', $data);
-close_session($sid);
+db_close_session($sid);
 

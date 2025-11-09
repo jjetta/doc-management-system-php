@@ -39,7 +39,7 @@ function api_call($endpoint, $data) {
     return $response_info;
 }
 
-function save_session($sid) {
+function db_save_session($sid) {
     global $dblink;
     global $SCRIPT_NAME;
 
@@ -65,29 +65,30 @@ function save_session($sid) {
     }
 }
 
-function close_session($sid) {
+function db_close_session($sid) {
     global $dblink;
     global $SCRIPT_NAME;
 
-    log_message("Closing session...", $SCRIPT_NAME);
+    log_message("Updating session status in db...", $SCRIPT_NAME);
 
-    $stmt = $dblink->prepare("UPDATE api_sessions SET closed_at = NOW() WHERE session_id = ?");
-    if (!$stmt) {
+    $update_query = "UPDATE api_sessions SET closed_at = NOW() WHERE session_id = ?";
+    $update_stmt = $dblink->prepare($update_query);
+    if (!$update_stmt) {
         log_message("[DB ERROR] Failed to prepare update statement - " . $dblink->error, $SCRIPT_NAME);
         return false;
     }
 
     try {
-        $stmt->bind_param("s", $sid);
-        if (!$stmt->execute()) {
-            log_message("[DB ERROR] Failed to update session $sid close - " . $stmt->error, $SCRIPT_NAME);
+        $update_stmt->bind_param("s", $sid);
+        if (!$update_stmt->execute()) {
+            log_message("[DB ERROR] Failed to update session $sid close - " . $update_stmt->error, $SCRIPT_NAME);
             return false;
         } else {
             log_message("Session closed: $sid", $SCRIPT_NAME);
             return true;
         }
     } finally {
-        $stmt->close();
+        $update_stmt->close();
     }
 
 }
@@ -98,7 +99,8 @@ function get_latest_session_id() {
 
     log_message("Fetching lastest session id...", $SCRIPT_NAME);
 
-    $result = $dblink->query("SELECT session_id FROM api_sessions ORDER BY created_at DESC LIMIT 1");
+    $query = "SELECT session_id FROM api_sessions ORDER BY created_at DESC LIMIT 1";
+    $result = $dblink->query($query);
 
     if (!$result) {
         log_message("[DB ERROR] Failed to execute query. - " . $dblink->error, $SCRIPT_NAME);
