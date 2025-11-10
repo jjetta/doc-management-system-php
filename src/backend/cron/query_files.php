@@ -3,6 +3,7 @@ require_once __DIR__ . '/helpers/api_helpers.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/helpers/log_helpers.php';
 require_once __DIR__ . '/helpers/file_helpers.php';
+require_once __DIR__ . '/helpers/db_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
