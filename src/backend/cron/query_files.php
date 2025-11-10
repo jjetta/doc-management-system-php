@@ -7,7 +7,9 @@ require_once __DIR__ . '/helpers/db_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
-$sid = get_latest_session_id2();
+$dblink = get_dblink();
+
+$sid = get_latest_session_id2($dblink);
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = http_build_query([
@@ -52,8 +54,6 @@ if ($query_files_response[0] === "Status: OK") {
     log_message("[ERROR] API returned unexpected status or format.", $SCRIPT_NAME);
     exit(1);
 }
-
-$dblink = get_dblink();
 
 log_message("[INFO] Processing loan ids and document_types...", $SCRIPT_NAME);
 foreach ($files as $file) {

@@ -7,10 +7,11 @@ require_once __DIR__ . '/helpers/db_helpers.php';
 
 $SCRIPT_NAME = basename(__FILE__);
 
-$sid = get_latest_session_id2();
+$dblink = get_dblink();
+
+$sid = get_latest_session_id2($dblink);
 $username = getenv('API_USER');
 
-$dblink = get_dblink();
 
 // get the top 100 docs from the db whose status is pending and 
 // store them in an associative array where document_id => filename

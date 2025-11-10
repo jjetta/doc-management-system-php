@@ -206,6 +206,7 @@ function get_pending_docs($dblink) {
     }
 }
 
+//TODO: Finish this
 function fail_file_status($dblink, $document_id) {
     global $SCRIPT_NAME;
 
