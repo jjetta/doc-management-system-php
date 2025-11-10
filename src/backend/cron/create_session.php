@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/helpers/api_helpers.php';
+require_once __DIR__ . '/helpers/db_helpers.php';
+
 $SCRIPT_NAME = basename(__FILE__);
 
 $username = getenv('API_USER');
