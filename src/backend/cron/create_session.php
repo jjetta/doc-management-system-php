@@ -26,7 +26,7 @@ if ($api_response[0] !== "Status: OK") {
 
 // Happy path at the bottom
 if ($api_response[0] === "Status: OK") {
-    db_save_session($api_response[2]);
+    db_save_session($dblink, $api_response[2]);
 } else {
     log_message("[FATAL] Session creation ultimately failed.", $SCRIPT_NAME);
 }

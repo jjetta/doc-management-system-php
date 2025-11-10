@@ -31,7 +31,7 @@ if (!$query_files_response || $query_files_response[1] === "MSG: SID not found")
 
     log_message("[RETRY] Retrying create_session...", $SCRIPT_NAME);
     $create_session_response = api_call('create_session', $retry_data);
-    db_save_session($create_session_response[2]);
+    db_save_session($dblink, $create_session_response[2]);
 
     $sid = get_latest_session_id2();
     $data = http_build_query([
