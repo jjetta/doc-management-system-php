@@ -34,17 +34,21 @@ The Loan Document Management System automates the workflow of retrieving, organi
   * Scripts are scheduled to run automatically for creating sessions, querying files, downloading pending files, and closing sessions.
   * A single consolidated log file simplifies monitoring and allows easy log rotation.
 
+* **Misc**
+
+  * Within the scope of this class, ORMs are not permitted, so raw SQL queries must be used.
 ---
 
 ## Database Design
 
-The system uses four primary tables:
+The system uses six primary tables:
 
-1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`, `closed_at`).
+1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`).
 2. **`loans`** – Stores loan records, each identified by a `loan_number`.
-3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`, `status`).
+3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`)
 4. **`document_types`** – Stores unique document types.
 5. **`document_contents`** - Stores the actual BLOB contents of the pdfs.
+6. **`document_statuses`** - Keeps track of the status of individual loans (whether a document is pending download, downloaded, or failed to download);
 
 ---
 
