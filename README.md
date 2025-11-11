@@ -48,7 +48,7 @@ The system uses six primary tables:
 3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`)
 4. **`document_types`** – Stores unique document types.
 5. **`document_contents`** - Stores the actual BLOB contents of the pdfs.
-6. **`document_statuses`** - Keeps track of the status of individual loans (whether a document is pending download, downloaded, or failed to download);
+6. **`document_statuses`** - Keeps track of the status of individual documents (whether a document is pending download, downloaded, or failed to download);
 
 ---
 
