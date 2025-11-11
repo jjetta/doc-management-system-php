@@ -2,29 +2,28 @@
 require_once 'log_helpers.php';
 require_once __DIR__ . '/../../config/db.php';
 
-$SCRIPT_NAME = basename(__FILE__);
+$script_name = basename(__FILE__);
 
 function generate_files($response_info) {
-    global $SCRIPT_NAME;
-    log_message("Generating files...", $SCRIPT_NAME);
+    log_message("Generating files...");
 
     $tmp = explode(":", $response_info[1]);
     $files = json_decode($tmp[1]);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
-        log_message("ERROR: Failed to decode file list. JSON error: " . json_last_error_msg(), $SCRIPT_NAME);
+        log_message("ERROR: Failed to decode file list. JSON error: " . json_last_error_msg());
         return [];
     }
 
     if (empty($files)) {
-        log_message("[query_files] No files returned by API", $SCRIPT_NAME);
+        log_message("[query_files] No files returned by API");
     } else {
-        log_message("[INFO]: Number of files received: " . count($files), $SCRIPT_NAME);
+        log_message("[INFO]: Number of files received: " . count($files));
     }
 
-    log_message("[INFO]: Files received: " . print_r($files, true), $SCRIPT_NAME);
+    log_message("[INFO]: Files received: " . print_r($files, true));
 
-    log_message("[INFO]: Starting file download process...", $SCRIPT_NAME);
+    log_message("[INFO]: Starting file download process...");
 
     return $files;
 }
