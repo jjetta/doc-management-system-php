@@ -9,7 +9,7 @@ $script_name = basename(__FILE__);
 
 $dblink = get_dblink();
 
-$sid = get_latest_session_id2($dblink);
+$sid = get_session($dblink);
 $username = getenv('API_USER');
 $password = getenv('API_PASS');
 $data = http_build_query([
@@ -20,20 +20,16 @@ $data = http_build_query([
 $query_files_response = api_call('query_files', $data);
 
 // retry in the event our sid got kicked or a timeout
-if (!$query_files_response || $query_files_response[1] === 'MSG: SID not found') {
-    log_message("[RETRY] Getting a new session_id...");
+if (!$query_files_response || 
+    !is_array($query_files_response) || 
+    $query_files_response[1] === 'MSG: SID not found') {
+    $retry = reconnect($dblink);
 
-    $retry_data = http_build_query([
-        'username' => $username,
-        'password' => $password
-    ]);
-    api_call('clear_session', $retry_data);
+    if ($retry['success']) {
+        log_message("[INFO] Retrying query_files...");
+        $sid = $retry['sid'];
+    }
 
-    log_message("[RETRY] Retrying create_session...");
-    $create_session_response = api_call('create_session', $retry_data);
-    db_save_session($dblink, $create_session_response[2]);
-
-    $sid = get_latest_session_id2($dblink);
     $data = http_build_query([
         'uid' => $username,
         'sid' => $sid
@@ -57,7 +53,6 @@ if ($query_files_response[0] === 'Status: OK') {
 
 log_message("[INFO] Processing loan ids and document_types...");
 foreach ($files as $file) {
-
     $file_parts = explode('-', $file);
 
     // Validate filename format and type
@@ -69,7 +64,7 @@ foreach ($files as $file) {
     list($loan_number, $docname, $timestamp) = $file_parts;
 
     // Update document_types table
-    $doctype_id = save_doctype_if_new($dblink, $docname);
+    $doctype_id = get_or_create($dblink, $docname);
 
     // Update loans table
     $loan_id = ensure_loan_exists($dblink, $loan_number);

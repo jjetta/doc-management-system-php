@@ -30,7 +30,7 @@ function write_file_to_db($dblink, $document_id, $content) {
     }
 }
 
-function save_doctype_if_new($dblink, $doctype) {
+function get_or_create($dblink, $doctype) {
 
     // Normalize the doctype: remove trailing "_{number}" if present
     $doctype = get_doctype_from_filename($doctype);
@@ -39,14 +39,14 @@ function save_doctype_if_new($dblink, $doctype) {
     $select_query = "SELECT doctype_id FROM document_types WHERE doctype = ?";
     $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
-        log_message("[DB ERROR][save_doctype_if_new] Failed to prepare SELECT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_or_create] Failed to prepare SELECT statement - " . $dblink->error);
         return null;
     }
 
     try {
         $select_stmt->bind_param("s", $doctype);
         if (!$select_stmt->execute()) {
-            log_message("[DB ERROR][save_doctype_if_new] Failed to execute SELECT statement - " . $select_stmt->error);
+            log_message("[DB ERROR][get_or_create] Failed to execute SELECT statement - " . $select_stmt->error);
             return null;
         }
 
@@ -62,7 +62,7 @@ function save_doctype_if_new($dblink, $doctype) {
     // Insert new doctype
     $insert_stmt = $dblink->prepare("INSERT INTO document_types (doctype) VALUES (?)");
     if (!$insert_stmt) {
-        log_message("[DB ERROR][save_doctype_if_new] Failed to prepare INSERT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_or_create] Failed to prepare INSERT statement - " . $dblink->error);
         return null;
     }
 
@@ -70,10 +70,10 @@ function save_doctype_if_new($dblink, $doctype) {
         $insert_stmt->bind_param("s", $doctype);
         if ($insert_stmt->execute()) {
             $new_id = $dblink->insert_id;
-            log_message("[save_doctype_if_new] Added new doctype: $doctype");
+            log_message("[get_or_create] Added new doctype: $doctype");
             return $new_id;
         } else {
-            log_message("[DB ERROR][save_doctype_if_new] Failed to insert $doctype: " . $insert_stmt->error);
+            log_message("[DB ERROR][get_or_create] Failed to insert $doctype: " . $insert_stmt->error);
             return null;
         }
     } finally {
@@ -109,7 +109,7 @@ function ensure_loan_exists($dblink, $loan_number) {
     $select_query = "SELECT loan_id FROM loans WHERE loan_number = ?";
     $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
-        log_message("[DB ERROR][ensure_loan_exists] Failed to prepare SELECT statement - " . $dblink->error, );
+        log_message("[DB ERROR][ensure_loan_exists] Failed to prepare SELECT statement - " . $dblink->error);
         return null;
     }
 
@@ -203,7 +203,7 @@ function get_pending_docs($dblink) {
     }
 }
 
-function fail_doc_status($dblink, $document_id) {
+function mark_as_failed($dblink, $document_id) {
 
     $update_query = "UPDATE document_statuses SET status = 'failed' WHERE document_id = ?";
     $update_stmt = $dblink->prepare($update_query);
@@ -271,31 +271,31 @@ function db_close_session($dblink, $sid) {
 
 }
 
-function get_latest_session_id2($dblink) {
+function get_session($dblink) {
 
     log_message("Fetching latest session id...");
 
     $select_query = "SELECT session_id FROM api_sessions ORDER BY created_at DESC LIMIT 1";
     $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
-        log_message("[DB ERROR][get_latest_session_id2] Failed to prepare SELECT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_session] Failed to prepare SELECT statement - " . $dblink->error);
         return null;
     }
 
     try {
-        if (!$select_stmt->execute()) {
-            log_message("[DB ERROR][get_latest_session_id2] Failed to execute SELECT statement - " . $dblink->error);
+       if (!$select_stmt->execute()) {
+            log_message("[DB ERROR][get_session] Failed to execute SELECT statement - " . $dblink->error);
             return null;
         }
 
         $latest_session_id = null;
         $select_stmt->bind_result($latest_session_id);
         if (!$select_stmt->fetch()) {
-            log_message("[get_latest_session_id2] No sessions found in api_sessions table.");
+            log_message("[get_session] No sessions found in api_sessions table.");
             return null;
         }
 
-        log_message("[get_latest_session_id2] Latest session ID found: $latest_session_id");
+        log_message("[get_session] Latest session ID found: $latest_session_id");
         return $latest_session_id;
     } finally {
         $select_stmt->close();

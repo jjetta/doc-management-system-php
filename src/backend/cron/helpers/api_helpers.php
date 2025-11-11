@@ -65,14 +65,37 @@ function reconnect($dblink) {
 
     //clear session
     log_message("[RECONNECT] Clearing session...");
-    $clear_session_response = api_call('clear_session', $data);
+    api_call('clear_session', $data);
 
-    //verify status ok
-    list($status, $msg, $session_id) = $clear_session_response;
-    if ($clear_session_response[0] === 'Status: OK') {
-        $session_id = $clear_session_response[2];
-        db_save_session($dblink, $session_id);
+    //create session
+    log_message("[RECONNECT] Creating a new session...");
+    $response = api_call('create_session', $data);
+
+    if (!is_array($response) ||
+        count($response) < 3 ||
+        $response[0] !== 'Status: OK') {
+        log_message("[FATAL][RECONNECT] Attempt to reconnect ultimately failed.");
+        return [
+            'success' => false,
+            'sid' => null
+        ];
     }
-    //maybe return a bool? or the new session id?
+
+    $session_id = $response[2];
+    try {
+        db_save_session($dblink, $session_id);
+    } catch (Exception $e){
+        log_message("[ERROR][RECONNECT] Failed to save session: " . $e->getMessage());
+        return [
+            'success' => false,
+            'sid' => null
+        ];
+    }
+
+    log_message("[RECONNECT] Successfully re-established connection");
+    return [
+        'success' => true,
+        'sid' => $session_id
+    ];
 }
 
