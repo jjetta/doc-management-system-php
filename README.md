@@ -6,7 +6,7 @@ A PHP/MySQL backend system designed to automate the processing and management of
 
 ## Project Overview
 
-The Loan Document Management System automates the workflow of retrieving, organizing, and storing loan-related documents. The system is structured around several key components:
+The system automates the workflow of retrieving, organizing, and storing loan-related documents. It's structured around several key components:
 
 * **API Session Management**
 
@@ -17,11 +17,6 @@ The Loan Document Management System automates the workflow of retrieving, organi
   * Available documents are queried from an external API and stored in a database.
   * Filenames are validated according to this convention: `loan_number-doctype-timestamp.pdf`.
   * Documents in the database are queued for download or further processing.
-
-* **Database Safety and Integrity**
-
-  * Prepared statements for secure database operations. 
-  * All statements and result sets are properly closed to prevent resource leaks.
 
 * **Cron Job Automation**
 
@@ -35,18 +30,18 @@ The Loan Document Management System automates the workflow of retrieving, organi
   * Logs are automatically archived, compressed and rotated daily. 
 
 
-* **Misc**
+* **Note**
 
-  * Within the scope of this class, ORMs are not permitted, so raw SQL queries are used throughout the project.
+  *  Raw SQL queries are used throughout the project since ORMs are not permitted within the scope of this class.
 ---
 
 ## High Level Database Design
 
 The system uses six primary tables:
 
-1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`).
-2. **`loans`** – Stores loan records, each identified by a `loan_number`.
-3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`)
+1. **`api_sessions`** – Tracks API sessions. (`session_id`, `created_at`)
+2. **`loans`** – Stores loan numbers. (`loan_id` and `loan_number`)
+3. **`documents`** – Tracks documents associated with loans. (`document_id`, `loan_id`, `doctype_id`, `uploaded_at`, `file_name`)
 4. **`document_types`** – Stores unique document types. (`doctype_id`, `doctype`)
 5. **`document_contents`** - Stores the actual BLOB content of the pdfs. (`document_id`, `content`, `size`)
 6. **`document_statuses`** - Keeps track of the status of individual documents (whether a document is pending download, downloaded, or failed to download); (`document_id`, `status`)
