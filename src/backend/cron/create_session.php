@@ -35,3 +35,4 @@ if ($api_response[0] === "Status: OK") {
     log_message("[FATAL] Session creation ultimately failed.");
 }
 
+echo str_repeat("-", 100) . "\n";

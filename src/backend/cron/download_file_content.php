@@ -21,13 +21,15 @@ $failed = 0;
 $pending_docs = get_pending_docs($dblink);
 
 if (empty($pending_docs)) {
-    log_message("No documents are pending for download. All good.");
+    log_message("No documents are pending for download. All good!");
     exit(0);
 }
 
 log_message("[INFO] Downloading files...");
 log_message(str_repeat('-', 45));
 foreach ($pending_docs as $document_id => $filename) {
+    log_message("");
+    log_message("[DOC #$document_id] " . str_repeat('=', 60));
     $data = http_build_query([
         'sid' => $sid,
         'uid' => $username,
@@ -38,7 +40,7 @@ foreach ($pending_docs as $document_id => $filename) {
     $mime = $content ? get_mime_type($content) : '';
 
     if (!$content || $mime !== "application/pdf") {
-        log_message("[WARN] Invalid content for $filename.");
+        log_message("[WARN] Failed to download document #$document_id.");
 
         $failed++;
         mark_as_failed($dblink, $document_id);
@@ -51,31 +53,36 @@ foreach ($pending_docs as $document_id => $filename) {
                 $sid = $retry['sid'];
             } else {
                 log_message("[FATAL] Reconnect failed. Terminating batch.");
+                log_message("[DOC #$document_id] " . str_repeat('=', 60));
                 break;
             }
         }
 
+        log_message("[DOC #$document_id] " . str_repeat('=', 60));
+        log_message("");
         continue;
     }
 
-    if (write_file_to_db($dblink, $document_id, $content)) {
+    if (db_write_doc($dblink, $document_id, $content)) {
         $downloaded++;
     } else {
         $failed++;
         mark_as_failed($dblink, $document_id);
     }
+
+    log_message("[DOC #$document_id] " . str_repeat('=', 60));
+    log_message("");
 }
 
 $elapsed = time() - $start_time;
 $total_docs = count($pending_docs);
 
-log_message(str_repeat('-', 45));
-log_message("[INFO] Download batch complete.");
+echo str_repeat("-", 100) . "\n";
+log_message("[INFO]    Batch complete.");
 log_message("[METRICS] Downloaded: $downloaded");
 log_message("[METRICS] Failed: $failed");
 log_message("[METRICS] Total processed: " . ($downloaded + $failed) . "/$total_docs");
 log_message("[METRICS] Success ratio: " . $downloaded . "/$total_docs");
 log_message("[METRICS] Execution time: {$elapsed}s");
 log_message("[METRICS] Average processing time per file: " . round($elapsed / $total_docs, 2) . "s");
-
-
+echo str_repeat("-", 100) . "\n";

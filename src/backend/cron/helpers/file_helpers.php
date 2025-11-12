@@ -23,8 +23,6 @@ function generate_files($response_info) {
 
     log_message("[INFO]: Files received: " . print_r($files, true));
 
-    log_message("[INFO]: Starting file download process...");
-
     return $files;
 }
 
@@ -74,4 +72,3 @@ function get_mime_type($content) {
 
     return $mimetype;
 }
-

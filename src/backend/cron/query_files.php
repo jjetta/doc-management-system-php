@@ -41,6 +41,7 @@ if (!$query_files_response ||
 // if there's no files, just exit
 if ($query_files_response[1] === 'MSG: No new files found' || $query_files_response[1] === 'MSG: []') {
     log_message("[INFO] No files to query. Moving along.");
+    echo str_repeat("-", 100) . "\n";
     exit(0);
 }
 
@@ -51,7 +52,7 @@ if ($query_files_response[0] === 'Status: OK') {
     exit(1);
 }
 
-log_message("[INFO] Processing loan ids and document_types...");
+log_message("[INFO] Processing files...");
 foreach ($files as $file) {
     $file_parts = explode('-', $file);
 
@@ -76,6 +77,4 @@ foreach ($files as $file) {
     save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id);
 }
 log_message("[INFO] Processing complete.");
-log_message("----------------------------------------------");
-
-return $files;
+echo str_repeat("-", 100) . "\n";

@@ -48,7 +48,7 @@ function api_call($endpoint, $data, $octet = false) {
     foreach ($response_info as $info) {
         log_message($info);
     }
-    echo str_repeat("-", 50) . "\n";
+    echo str_repeat("-", 100) . "\n";
 
     return $response_info;
 }

@@ -4,13 +4,13 @@ require_once __DIR__ . '/../../config/db.php';
 
 $script_name = basename(__FILE__);
 
-function write_file_to_db($dblink, $document_id, $content) {
+function db_write_doc($dblink, $document_id, $content) {
     $size = strlen($content);
 
     $insert_query = "INSERT INTO document_contents (document_id, content, size) VALUES (?, ?, ?)";
     $insert_stmt = $dblink->prepare($insert_query);
     if (!$insert_stmt) {
-        log_message("[DB ERROR][write_file_to_db] Failed to prepare INSERT statement - " . $dblink->error);
+        log_message("[DB ERROR][db_write_doc] Failed to prepare INSERT statement - " . $dblink->error);
         return false;
     }
 
@@ -19,11 +19,11 @@ function write_file_to_db($dblink, $document_id, $content) {
         $insert_stmt->bind_param("ibi", $document_id, $null, $size);
         $insert_stmt->send_long_data(1, $content);
         if (!$insert_stmt->execute()) {
-            log_message("[DB ERROR][write_file_to_db] Failed to execute INSERT statement - " . $dblink->error);
+            log_message("[DB ERROR][db_write_doc] Failed to execute INSERT statement - " . $dblink->error);
             return false;
         }
 
-        log_message("[write_file_to_db] Document #$document_id successfully written to database.");
+        log_message("[db_write_doc] Successfully downloaded document #$document_id.");
         return true;
     } finally {
         $insert_stmt->close();

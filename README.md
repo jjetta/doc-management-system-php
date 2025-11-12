@@ -10,45 +10,46 @@ The Loan Document Management System automates the workflow of retrieving, organi
 
 * **API Session Management**
 
-  * Handles creation, tracking, and closing of API sessions with timestamps.
+  * Handles creation and tracking of API sessions. (with timestamps!)
 
 * **Document Processing**
 
-  * Queries available documents from an external API.
-  * Validates filenames following the convention: `loan_number-doctype-timestamp.pdf`.
-  * Queues documents in the database for download or further processing.
+  * Available documents are queried from an external API and stored in a database.
+  * Filenames are validated according to this convention: `loan_number-doctype-timestamp.pdf`.
+  * Documents in the database are queued for download or further processing.
 
 * **Database Safety and Integrity**
 
   * Prepared statements for secure database operations. 
   * All statements and result sets are properly closed to prevent resource leaks.
 
-* **Logging**
-
-  * Centralized logging for all cron jobs.
-  * Logs every API interaction, database operation, and document processing step.
-  * Provides detailed success and error messages for easier debugging and monitoring.
-
 * **Cron Job Automation**
 
-  * Scripts are scheduled to run automatically for creating sessions, querying files, downloading pending files, and closing sessions.
-  * A single consolidated log file simplifies monitoring and allows easy log rotation.
+  * Scripts are scheduled to automatically run hourly for creating sessions, querying files, and downloading pending files.
+
+* **Logging**
+
+  * All cron jobs write to a centralized log file.
+  * Every API interaction, database operation, and document processing step is logged.
+  * Detailed success and error messages are provided for easier debugging and monitoring.
+  * Logs are automatically archived, compressed and rotated daily. 
+
 
 * **Misc**
 
-  * Within the scope of this class, ORMs are not permitted, so raw SQL queries must be used.
+  * Within the scope of this class, ORMs are not permitted, so raw SQL queries are used throughout the project.
 ---
 
-## Database Design
+## High Level Database Design
 
 The system uses six primary tables:
 
 1. **`api_sessions`** – Tracks API sessions (`session_id`, `created_at`).
 2. **`loans`** – Stores loan records, each identified by a `loan_number`.
 3. **`documents`** – Tracks documents associated with loans (`loan_id`, `file_name`, `doctype_id`)
-4. **`document_types`** – Stores unique document types.
-5. **`document_contents`** - Stores the actual BLOB contents of the pdfs.
-6. **`document_statuses`** - Keeps track of the status of individual documents (whether a document is pending download, downloaded, or failed to download);
+4. **`document_types`** – Stores unique document types. (`doctype_id`, `doctype`)
+5. **`document_contents`** - Stores the actual BLOB content of the pdfs. (`document_id`, `content`, `size`)
+6. **`document_statuses`** - Keeps track of the status of individual documents (whether a document is pending download, downloaded, or failed to download); (`document_id`, `status`)
 
 ---
 
@@ -80,7 +81,7 @@ I've learned so much thus far working on this project. I gained valuable experie
 * **File parsing and normalization** using PHP string and regex functions.
 * **Logging**: centralized logs, success/failure tracking, and exception-safe logging.
 * **System architecture** for long-running automated systems that need data integrity, reliability, and traceability.
-* And a lot of debugging haha.
+* Lots of debugging haha.
 
 ---
 
