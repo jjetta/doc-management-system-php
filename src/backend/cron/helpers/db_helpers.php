@@ -30,7 +30,7 @@ function db_write_doc($dblink, $document_id, $content) {
     }
 }
 
-function get_or_create($dblink, $doctype) {
+function get_or_create_doctype($dblink, $doctype) {
 
     // Normalize the doctype: remove trailing "_{number}" if present
     $doctype = get_doctype_from_filename($doctype);
@@ -39,14 +39,14 @@ function get_or_create($dblink, $doctype) {
     $select_query = "SELECT doctype_id FROM document_types WHERE doctype = ?";
     $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
-        log_message("[DB ERROR][get_or_create] Failed to prepare SELECT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_or_create_doctype] Failed to prepare SELECT statement - " . $dblink->error);
         return null;
     }
 
     try {
         $select_stmt->bind_param("s", $doctype);
         if (!$select_stmt->execute()) {
-            log_message("[DB ERROR][get_or_create] Failed to execute SELECT statement - " . $select_stmt->error);
+            log_message("[DB ERROR][get_or_create_doctype] Failed to execute SELECT statement - " . $select_stmt->error);
             return null;
         }
 
@@ -62,18 +62,17 @@ function get_or_create($dblink, $doctype) {
     // Insert new doctype
     $insert_stmt = $dblink->prepare("INSERT INTO document_types (doctype) VALUES (?)");
     if (!$insert_stmt) {
-        log_message("[DB ERROR][get_or_create] Failed to prepare INSERT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_or_create_doctype] Failed to prepare INSERT statement - " . $dblink->error);
         return null;
     }
 
     try {
         $insert_stmt->bind_param("s", $doctype);
         if ($insert_stmt->execute()) {
-            $new_id = $dblink->insert_id;
-            log_message("[get_or_create] Added new doctype: $doctype");
-            return $new_id;
+            log_message("[get_or_create_doctype] Added new doctype: $doctype");
+            return $dblink->insert_id;
         } else {
-            log_message("[DB ERROR][get_or_create] Failed to insert $doctype: " . $insert_stmt->error);
+            log_message("[DB ERROR][get_or_create_doctype] Failed to insert $doctype: " . $insert_stmt->error);
             return null;
         }
     } finally {
@@ -81,48 +80,49 @@ function get_or_create($dblink, $doctype) {
     }
 }
 
-function save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id) {
+function save_file_metadata($dblink, $loan_id, $doctype_id, $mysql_ts, $docname) {
 
-    $mysql_ts = get_mysql_ts($file_parts[2]);
-
-    $insert_query = "INSERT INTO documents (loan_id, doctype_id, uploaded_at, file_name) VALUES (?, ?, ?, ?)";
+    $insert_query = "INSERT INTO documents (loan_id, doctype_id, uploaded_at, doc_name) VALUES (?, ?, ?, ?)";
     $insert_stmt = $dblink->prepare($insert_query);
     if (!$insert_stmt) {
         log_message("[DB ERROR][save_file_metadata] Failed to prepare INSERT statement - " . $dblink->error);
+        return null;
     }
 
     try {
-        $insert_stmt->bind_param("iiss", $loan_id, $doctype_id, $mysql_ts, $file_parts[1]);
+        $insert_stmt->bind_param("iiss", $loan_id, $doctype_id, $mysql_ts, $docname);
         if (!$insert_stmt->execute()) {
             log_message("[DB ERROR][save_file_metadata] Failed to execute INSERT - " . $dblink->error);
+            return null;
         }
 
-        log_message("[save_file_metadata] Metadata saved for $file_parts[0]-$file_parts[1]-$file_parts[2]");
+        log_message("[save_file_metadata] Metadata saved for document #$dblink->insert_id");
+        return $dblink->insert_id;
     } finally {
             $insert_stmt->close();
     }
 }
 
-function ensure_loan_exists($dblink, $loan_number) {
+function get_or_create_loan($dblink, $loan_number) {
 
     // Check if the loan already exists
     $select_query = "SELECT loan_id FROM loans WHERE loan_number = ?";
     $select_stmt = $dblink->prepare($select_query);
     if (!$select_stmt) {
-        log_message("[DB ERROR][ensure_loan_exists] Failed to prepare SELECT statement - " . $dblink->error);
+        log_message("[DB ERROR][get_or_create_loan] Failed to prepare SELECT statement - " . $dblink->error);
         return null;
     }
 
     try {
         $select_stmt->bind_param("s", $loan_number);
         if (!$select_stmt->execute()) {
-            log_message("[DB ERROR][ensure_loan_exists] Failed to execute SELECT statement - " . $dblink->error);
+            log_message("[DB ERROR][get_or_create_loan] Failed to execute SELECT statement - " . $dblink->error);
             return null;
         }
 
         $result = $select_stmt->get_result();
         if (!$result) {
-            log_message("[DB ERROR][ensure_loan_exists] Failed to get result - " . $dblink->error);
+            log_message("[DB ERROR][get_or_create_loan] Failed to get result - " . $dblink->error);
         }
 
         if ($row = $result->fetch_assoc()) {
@@ -146,10 +146,11 @@ function ensure_loan_exists($dblink, $loan_number) {
     try {
         $insert_stmt->bind_param("s", $loan_number);
         if (!$insert_stmt->execute()) {
-            log_message("[DB ERROR][ensure_loan_exists] Failed to execute INSERT -  " . $dblink->error);
+            log_message("[DB ERROR][get_or_create_loan] Failed to execute INSERT -  " . $dblink->error);
             return null;
         }
 
+        log_message(str_repeat('-', 75));
         log_message("[INFO] New loan inserted: $loan_number");
         return $insert_stmt->insert_id;
 
@@ -163,7 +164,7 @@ function ensure_loan_exists($dblink, $loan_number) {
 function get_pending_docs($dblink) {
 
     $select_query = "
-        SELECT d.document_id, l.loan_number, d.file_name, d.uploaded_at
+        SELECT d.document_id, l.loan_number, d.doc_name, d.uploaded_at
         FROM documents d
         JOIN loans l ON d.loan_id = l.loan_id
         JOIN document_statuses s ON d.document_id = s.document_id
@@ -192,7 +193,7 @@ function get_pending_docs($dblink) {
         $pending_docs = [];
         while ($row = $result->fetch_assoc()) {
             $uploaded_at = date('Ymd_H_i_s', strtotime($row['uploaded_at']));
-            $filename = "{$row['loan_number']}-{$row['file_name']}-{$uploaded_at}.pdf";
+            $filename = "{$row['loan_number']}-{$row['doc_name']}-{$uploaded_at}.pdf";
             $pending_docs[$row['document_id']] = $filename ;
         }
 

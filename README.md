@@ -6,7 +6,12 @@ A PHP/MySQL backend system designed to automate the processing and management of
 
 ## Project Overview
 
-The system automates the workflow of retrieving, organizing, and storing loan-related documents. It's structured around several key components:
+The system automates the workflow of retrieving, organizing, and storing loan-related documents. Here are its key components:
+
+* **System Info**
+
+  * The system runs on an AWS EC2 instance with two vCPUs, and 30 GB of storage.
+  * The virtual machine is running Ubuntu Linux.
 
 * **API Session Management**
 
@@ -30,9 +35,10 @@ The system automates the workflow of retrieving, organizing, and storing loan-re
   * Logs are automatically archived, compressed and rotated daily. 
 
 
-* **Note**
+* **Notes**
 
-  *  Raw SQL queries are used throughout the project since ORMs are not permitted within the scope of this class.
+  * Raw SQL queries are used throughout the project since ORMs are not permitted within the scope of this class.
+  * Also, an immediate improvement that could be made to this project would be to use some type of object store for BLOBs, like S3 or something. But that's also outside of the constraints of this class.
 ---
 
 ## High Level Database Design
@@ -45,6 +51,12 @@ The system uses six primary tables:
 4. **`document_types`** – Stores unique document types. (`doctype_id`, `doctype`)
 5. **`document_contents`** - Stores the actual BLOB content of the pdfs. (`document_id`, `content`, `size`)
 6. **`document_statuses`** - Keeps track of the status of individual documents (whether a document is pending download, downloaded, or failed to download); (`document_id`, `status`)
+
+* **Notes**
+  * The backend has logic that inserts new documents into the `documents` table when it queries files from the API.
+  * Database triggers are in place such that:
+    - Upon inserts into the `documents` table, the new document id is also inserted into the `document_statuses` table with a default value of *pending*.
+    - Upon inserts into the `document_contents` table, the corresponding document id in the `document_statuses` table has its status updated to *downloaded*. 
 
 ---
 
@@ -73,7 +85,6 @@ I've learned so much thus far working on this project. I gained valuable experie
 * **Linux**: crontabs, file permissions
 * **Database safety practices**: prepared statements, resource management, and error handling.
 * **Working with external APIs** and structuring cron-based workflows.
-* **File parsing and normalization** using PHP string and regex functions.
 * **Logging**: centralized logs, success/failure tracking, and exception-safe logging.
 * **System architecture** for long-running automated systems that need data integrity, reliability, and traceability.
 * Lots of debugging haha.

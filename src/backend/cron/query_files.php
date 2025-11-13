@@ -64,17 +64,20 @@ foreach ($files as $file) {
 
     list($loan_number, $docname, $timestamp) = $file_parts;
 
-    // Update document_types table
-    $doctype_id = get_or_create($dblink, $docname);
+    // Update document_types table if necessary
+    $doctype_id = get_or_create_doctype($dblink, $docname);
 
-    // Update loans table
-    $loan_id = ensure_loan_exists($dblink, $loan_number);
+    // Update loans table if necessary
+    $loan_id = get_or_create_loan($dblink, $loan_number);
     if ($loan_id === null) {
         log_message("[ERROR] Could not ensure loan exists for $loan_number");
     }
 
+    // prepare the timestamp for insertion into the db
+    $mysql_ts = get_mysql_ts($timestamp);
+
     // Update documents table with file metadata
-    save_file_metadata($dblink, $file_parts, $loan_id, $doctype_id);
+    save_file_metadata($dblink, $loan_id, $doctype_id, $mysql_ts, $docname);
 }
 log_message("[INFO] Processing complete.");
 echo str_repeat("-", 100) . "\n";

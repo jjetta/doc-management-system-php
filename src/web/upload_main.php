@@ -16,18 +16,20 @@
 </style>
 </head>
 <body>
-    <div class="main-box">
+    <div class="row main-box">
         <h3>Document Management System</h3>
         <hr>
+        <div class="col-md-12">
     <div class="panel panel-primary">
-        <div class="panel-heading">Main Menu</div>
+        <div class="panel-heading">Upload Main Menu</div>
         <div class="panel-body">
-            <div class="alert alert-info"><a href="upload_main.php">Upload Document</a>
+            <div class="alert alert-info"><a href="upload_new.php">Upload to New Loan</a>
             </div>
-            <div class="alert alert-info"><a href="search_main.php">Search Main</a>
+            <div class="alert alert-info"><a href="upload_existing.php">Upload to Existing Loan</a>
             </div>
         </div>
     </div>
+        </div>
     </div>
 </body>
 </html>

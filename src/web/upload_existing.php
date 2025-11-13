@@ -5,11 +5,19 @@ require_once __DIR__ . '/../backend/config/db.php';
 
 $dblink = get_dblink();
 
-$query = "SELECT doctype FROM document_types ORDER BY doctype ASC";
-$result = $dblink->query($query) or die("Query failed: " . $dblink->error);
+$loan_query = "SELECT loan_number FROM loans ORDER BY loan_id ASC";
+$loan_result = $dblink->query($loan_query) or die("Query failed: " . $dblink->error);
+
+$doc_query = "SELECT doctype FROM document_types ORDER BY doctype ASC";
+$doc_result = $dblink->query($doc_query) or die("Query failed: " . $dblink->error);
+
+$existing_loans = [];
+while ($row = $loan_result->fetch_assoc()) {
+    $existing_loans[] = $row['loan_number'];
+}
 
 $document_types = [];
-while ($row = $result->fetch_assoc()) {
+while ($row = $doc_result->fetch_assoc()) {
     $document_types[] = $row['doctype'];
 }
 
@@ -100,7 +108,7 @@ if (isset($_POST['submit']) && $_POST['submit'] == "submit") {
         <hr>
         <div class="col-md-12">
     <div class="panel panel-primary">
-        <div class="panel-heading">Upload New Loan ID</div>
+        <div class="panel-heading">Upload Existing Loan ID</div>
         <div class="panel-body">
             <h3>Please fill out the form below.</h3>
             <hr>
@@ -108,9 +116,17 @@ if (isset($_POST['submit']) && $_POST['submit'] == "submit") {
             <input type="hidden" name="MAX_FILE_SIZE" value="5000000">
                 <div class="form-group<?php echo !empty($loan_error) ? ' has-error' : ''; ?>">
                     <label class="control-label">Loan Number:</label>
-                    <input class="form-control" name="loanId" type="text" value="<?php echo htmlspecialchars($input_loan_number); ?>">
+                    <select name="loanId" class="form-control">
+                        <option value="">Select Loan Number</option>
+                        <?php foreach ($existing_loans as $loan): ?>
+                            <option value="<?php echo htmlspecialchars($loan); ?>"
+                                <?php echo ($input_loan_number == $loan) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($loan); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     <?php if (!empty($loan_error)): ?>
-                    <span class="help-block"><?php echo htmlspecialchars($loan_error); ?></span>
+                        <span class="help-block"><?php echo htmlspecialchars($loan_error); ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="form-group<?php echo !empty($doctype_error) ? ' has-error' : ''; ?>">
